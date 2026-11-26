@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>前半程骗人</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f4f1ea; color: #23201b; line-height: 1.6; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 20px 14px 40px; }
+  h1 { font-size: 26px; letter-spacing: 1px; }
+  .lead { color: #5d564b; font-size: 14px; margin: 4px 0 14px; }
+  .card { background: #fff; border-radius: 10px; padding: 14px; border: 1px solid #ddd5c6; margin-bottom: 14px; min-width: 0; }
+  .card h2 { font-size: 15px; font-weight: 600; margin-bottom: 8px; overflow-wrap: anywhere; }
+  label { font-size: 12px; color: #5d564b; display: block; overflow-wrap: anywhere; }
+  input, select { font: inherit; font-size: 14px; padding: 6px 8px; border: 1px solid #c3b9a6; border-radius: 6px; width: 100%; min-width: 0; background: #fff; font-variant-numeric: tabular-nums; }
+  .grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px 10px; margin-top: 8px; }
+  .grid > div { min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; }
+  .grid .w2 { grid-column: span 2; } .grid .w4 { grid-column: span 4; }
+  .bad { border-color: #b3362b !important; background: #fff0ed !important; }
+  button { font: inherit; font-size: 13px; padding: 6px 11px; border-radius: 6px; border: 1px solid #8a4b1f; background: #8a4b1f; color: #fff; cursor: pointer; }
+  button.ghost { background: #fff; color: #8a4b1f; }
+  button:disabled { opacity: .45; cursor: default; }
+  .presets, .dl { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+  .rows { margin-top: 8px; display: grid; gap: 6px; }
+  .rrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 3.4fr) 40px; gap: 6px; align-items: center; }
+  .rrow button { padding: 5px 0; }
+  .rhead { font-size: 12px; color: #5d564b; margin-top: 12px; }
+  .err { display: none; background: #fff0ed; border: 1px solid #ecb4aa; color: #8e2318; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; overflow-wrap: anywhere; }
+  .muted { color: #776f62; font-size: 12px; overflow-wrap: anywhere; }
+  .verdict { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .stamp { display: inline-block; border: 3px solid #2c7a4b; color: #2c7a4b; border-radius: 6px; padding: 0 10px; font-weight: 800; font-size: 20px; white-space: nowrap; transform: rotate(-3deg); }
+  .stamp.lied { border-color: #b3362b; color: #b3362b; } .stamp.tie { border-color: #b7791f; color: #b7791f; }
+  #big { font-size: 15px; overflow-wrap: anywhere; min-width: 0; flex: 1; } #big b { font-size: 24px; font-variant-numeric: tabular-nums; }
+  #facts { margin: 10px 0 0 18px; font-size: 13px; color: #3a352d; } #facts li { margin: 3px 0; overflow-wrap: anywhere; }
+  .scrub { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  .scrub input[type=range] { flex: 1; min-width: 160px; padding: 0; accent-color: #8a4b1f; }
+  #scrubTxt { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  canvas { display: block; width: 100%; }
+  #track { height: 170px; } #gap { height: 240px; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .sheet { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
+  .sheet th, .sheet td { padding: 6px 7px; border-bottom: 1px solid #ece6da; text-align: center; white-space: nowrap; }
+  .sheet th { font-size: 12px; color: #5d564b; font-weight: 600; }
+  .sheet td.nm { text-align: left; font-weight: 600; max-width: 8em; overflow: hidden; text-overflow: ellipsis; }
+  .sheet td.fast { background: #e6f3ea; font-weight: 700; color: #1f6a3d; }
+  .sheet td.half { background: #fbf1dd; }
+  .sheet .rk { display: inline-block; min-width: 18px; font-size: 11px; color: #fff; background: #9a907f; border-radius: 9px; padding: 0 5px; margin-left: 4px; }
+  .sheet .rk.r1 { background: #8a4b1f; }
+  .sheet .sub { display: block; font-size: 11px; color: #776f62; }
+  #events { margin: 4px 0 0 0; list-style: none; font-size: 13px; color: #3a352d; }
+  #events li { margin: 0 0 6px; padding-left: 14px; border-left: 3px solid #d7c7a8; overflow-wrap: anywhere; }
+  #events li.lead { border-left-color: #b3362b; }
+  #events li.more { display: none; } #events.open li.more { display: list-item; }
+  #focusBox p { font-size: 14px; margin: 4px 0; overflow-wrap: anywhere; }
+  .bars { display: grid; gap: 4px; margin-top: 8px; }
+  .bar { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) 5.5em; gap: 6px; align-items: center; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .bar .ax { position: relative; height: 14px; background: #f4f1ea; border-radius: 3px; }
+  .bar .ax i { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: #9a907f; }
+  .bar .ax b { position: absolute; top: 2px; bottom: 2px; border-radius: 2px; }
+  #sugs { display: grid; gap: 8px; }
+  .sug { display: flex; gap: 10px; align-items: center; justify-content: space-between; border: 1px dashed #c3b9a6; border-radius: 8px; padding: 8px 10px; }
+  .sug span { font-size: 13px; overflow-wrap: anywhere; min-width: 0; }
+  .sug button { flex: none; }
+  .foot { font-size: 12px; color: #776f62; margin-top: 10px; overflow-wrap: anywhere; }
+  @media (max-width: 640px) {
+    h1 { font-size: 22px; }
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid .w2, .grid .w4 { grid-column: span 2; }
+    #big b { font-size: 20px; }
+    .rrow { grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr) 34px; gap: 4px; }
+    .sheet { font-size: 13px; } .sheet th, .sheet td { padding: 5px 4px; }
+    #track { height: 150px; } #gap { height: 210px; }
+    .bar { grid-template-columns: 6em minmax(0, 1fr) 4.8em; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>前半程骗人</h1>
+  <p class="lead">把一场比赛的分段用时贴进来（每个计时点的累计用时），看半程谁在前、最后谁赢，中途谁在哪一米超过了谁，每一段谁最快，以及落后的人差在哪一段、最后一段要快多少才能赢。跑步、游泳、骑车、划船都行。</p>
+
+  <div class="card">
+    <h2>比赛</h2>
+    <div class="grid">
+      <div class="w2"><label for="label">比赛名（可空）</label><input id="label" maxlength="40"></div>
+      <div class="w4"><label for="marks">计时点（米，从近到远，最后一个是终点）</label><input id="marks" maxlength="200" inputmode="decimal"></div>
+      <div class="w2"><label for="focus">想细看的人（空着 = 半程领头的那位）</label><select id="focus"></select></div>
+    </div>
+    <div class="rrow rhead"><span>名字</span><span>每个计时点的累计用时（秒，或 1:02.35）</span><span></span></div>
+    <div class="rows" id="rows"></div>
+    <div class="presets"><button class="ghost" id="addRow">加一个人</button></div>
+    <p class="muted" style="margin-top:8px">2–8 个人，2–20 个计时点；用时最多 2 位小数，填的是从起点算起的累计用时，不是每段用时。两个计时点之间按匀速算。本页不内置任何真实比赛或运动员成绩。</p>
+    <div class="presets" id="presets"></div>
+    <div class="presets"><button class="ghost" id="reset">恢复默认</button></div>
+  </div>
+
+  <div class="err" id="error"></div>
+
+  <div id="out">
+    <div class="card">
+      <div class="verdict"><span class="stamp" id="stamp"></span><div id="big"></div></div>
+      <ul id="facts"></ul>
+    </div>
+    <div class="card">
+      <h2>拖一下，看任意一米时谁在前</h2>
+      <div class="scrub"><input type="range" id="scrub" min="0" max="400" step="1" aria-label="看第几米"><span id="scrubTxt"></span></div>
+      <canvas id="track"></canvas>
+      <p class="muted" id="trackNote"></p>
+    </div>
+    <div class="card">
+      <h2>落后领头的人几秒（0 = 正在领头，线交叉 = 有人超过）</h2>
+      <canvas id="gap"></canvas>
+    </div>
+    <div class="card">
+      <h2>分段用时（绿 = 这段最快，小圆标 = 到这个点时的名次）</h2>
+      <div class="scroll"><table class="sheet" id="sheet"></table></div>
+    </div>
+    <div class="card">
+      <h2>谁在哪儿超过了谁</h2>
+      <ul id="events"></ul>
+      <button class="ghost" id="evMore" style="display:none;margin:2px 0 8px"></button>
+      <p class="muted">红边 = 这一下换了领头的人。位置是「两个计时点之间匀速」这个假设下算出的，计时点越密越准。</p>
+    </div>
+    <div class="card" id="focusCard">
+      <h2 id="focusTitle"></h2>
+      <div id="focusBox"></div>
+    </div>
+    <div class="card" id="sugCard">
+      <h2>可以试的（点「代回」直接改上面）</h2>
+      <div id="sugs"></div>
+    </div>
+    <div class="card">
+      <h2>拿走结果</h2>
+      <div class="dl" style="margin-top:0"><button id="dlPNG">结果卡 PNG</button><button class="ghost" id="dlCSV">分段表 CSV</button><button class="ghost" id="dlMD">Markdown</button><button class="ghost" id="dlJSON">JSON 备份</button></div>
+      <p class="foot">按「两个计时点之间匀速」算超越点和任意一米的位置；名次看到达同一距离的先后，同时到算并列。不算起跑反应、风速、泳道或跑道差、接力交棒。成绩都是你自己填的；默认数据为虚构示例。填的内容只存在本机浏览器。</p>
+    </div>
+  </div>
+</div>
+
+  <script>
+/* 前半程骗人 · 计算核心（纯函数，Node 与浏览器共用）
+ * 一场比赛几个人，每人在同一组计时点（比如 100/200/300/400 米）有一个累计用时。
+ * 本页回答：半程谁在前、最后谁赢；中途谁在哪一米超过了谁；每一段谁最快；
+ * 你关心的那个人差在哪一段、最后一段要快多少才能赢。
+ * 模型假设：两个计时点之间按匀速算（用时随距离直线变化）。所有人用同一组计时点，
+ * 所以任意两人的「用时差」在每一段里也是直线，超越点可以精确解出来（有理数），不靠采样。
+ * 精确性：距离按厘米、用时按百分之一秒整数存；比较全用整数交叉相乘；只在显示时四舍五入。
+ * 数据全是你自己填的；本页不内置任何真实运动员或比赛成绩。 */
+(function (root) {
+  'use strict';
+  const KEYS = ['label', 'marks', 'focus', 'rows'];
+  const MAX_ROWS = 8, MIN_ROWS = 2, MAX_MARKS = 20, MIN_MARKS = 2;
+  const MAX_DIST = 10000000; /* 100 公里，单位厘米 */
+  const MAX_TIME = 8640000; /* 24 小时，单位百分之一秒 */
+
+  class InputError extends Error { constructor(msg, field) { super(msg); this.field = field; } }
+
+  function fmtInt(n) { return Number(n).toLocaleString('en-US'); }
+  /* 正有理数 num/den 四舍五入到整数（num、den 为非负整数，den>0） */
+  function rq(num, den) { return Math.floor((2 * num + den) / (2 * den)); }
+  /* 厘米 → 米的文本（去末尾 0） */
+  function fmtD(cm) { const i = Math.floor(cm / 100), f = cm % 100; return f ? i + '.' + String(f).padStart(2, '0').replace(/0$/, '') : String(i); }
+  /* 百分之一秒 → 文本：58.90 / 1:02.35 / 1:02:03.50 */
+  function fmtT(cs) {
+    const neg = cs < 0; cs = Math.abs(cs);
+    const f = String(cs % 100).padStart(2, '0'), s = Math.floor(cs / 100);
+    let t;
+    if (s < 60) t = s + '.' + f;
+    else if (s < 3600) t = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + '.' + f;
+    else t = Math.floor(s / 3600) + ':' + String(Math.floor(s / 60) % 60).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0') + '.' + f;
+    return (neg ? '−' : '') + t;
+  }
+  /* 时间差文本：0.40 秒 / 1:02.35 */
+  function fmtGap(cs) { return Math.abs(cs) < 6000 ? fmtT(cs) + ' 秒' : fmtT(cs); }
+  /* 速度：cm/cs 恰好等于 m/s。返回 2 位小数的 m/s 文本与 1 位小数的 km/h 文本 */
+  function speed(cm, cs) { return { ms: (rq(cm * 100, cs) / 100).toFixed(2), kmh: (rq(cm * 36, cs) / 10).toFixed(1) }; }
+
+  function splitTok(t) { return String(t == null ? '' : t).trim().split(/[\s,，、;；|/]+/).filter(Boolean); }
+
+  function parseDist(t, field) {
+    if (!/^\d+(\.\d{1,2})?$/.test(t)) throw new InputError('计时点「' + t + '」只能填不小于 0 的米数，最多 2 位小数', field);
+    const [a, b = ''] = t.split('.');
+    const v = parseInt(a, 10) * 100 + parseInt((b + '00').slice(0, 2), 10);
+    if (v > MAX_DIST) throw new InputError('计时点最远 100,000 米', field);
+    return v;
+  }
+  /* 用时：58.9 / 1:02.35 / 1:02:03.5，最多 2 位小数 */
+  function parseTime(t, field, who) {
+    const m = /^(?:(\d+):)?(?:(\d+):)?(\d+)(?:\.(\d{1,2}))?$/.exec(t);
+    if (!m) throw new InputError(who + '的用时「' + t + '」看不懂：写成 58.9 或 1:02.35 这样', field);
+    let h = 0, mi = 0;
+    const s = parseInt(m[3], 10), f = parseInt(((m[4] || '') + '00').slice(0, 2), 10);
+    if (m[2] !== undefined) { h = parseInt(m[1], 10); mi = parseInt(m[2], 10); } else if (m[1] !== undefined) { mi = parseInt(m[1], 10); }
+    if ((m[1] !== undefined) && s >= 60) throw new InputError(who + '的用时「' + t + '」秒数要小于 60', field);
+    if (m[2] !== undefined && mi >= 60) throw new InputError(who + '的用时「' + t + '」分钟要小于 60', field);
+    if (s > 86400) throw new InputError(who + '的用时太长了（最多 24 小时）', field);
+    const v = ((h * 60 + mi) * 60 + s) * 100 + f;
+    if (v > MAX_TIME) throw new InputError(who + '的用时太长了（最多 24 小时）', field);
+    return v;
+  }
+
+  function parse(s) {
+    if (!s || typeof s !== 'object') throw new InputError('数据坏了', 'rows');
+    const label = String(s.label == null ? '' : s.label);
+    if (label.length > 30) throw new InputError('比赛名最多 30 个字', 'label');
+    const mt = splitTok(s.marks);
+    if (mt.length < MIN_MARKS) throw new InputError('计时点至少 ' + MIN_MARKS + ' 个（最后一个是终点）', 'marks');
+    if (mt.length > MAX_MARKS) throw new InputError('计时点最多 ' + MAX_MARKS + ' 个', 'marks');
+    const d = mt.map((t) => parseDist(t, 'marks'));
+    for (let k = 0; k < d.length; k++) {
+      if (d[k] <= (k ? d[k - 1] : 0)) throw new InputError(k ? '计时点要一个比一个远（第 ' + (k + 1) + ' 个「' + mt[k] + '」不比前一个远）' : '第一个计时点要大于 0', 'marks');
+    }
+    if (!Array.isArray(s.rows)) throw new InputError('成绩表坏了', 'rows');
+    if (s.rows.length < MIN_ROWS) throw new InputError('至少要 ' + MIN_ROWS + ' 个人', 'rows');
+    if (s.rows.length > MAX_ROWS) throw new InputError('最多 ' + MAX_ROWS + ' 个人', 'rows');
+    const rows = [], seen = {};
+    s.rows.forEach((r, i) => {
+      if (!r || typeof r !== 'object') throw new InputError('成绩表坏了', 'rows');
+      const nm = String(r.name == null ? '' : r.name).trim() || '选手 ' + (i + 1);
+      if (nm.length > 12) throw new InputError('第 ' + (i + 1) + ' 个人的名字最多 12 个字', 'row-' + i + '-name');
+      if (seen[nm]) throw new InputError('名字「' + nm + '」重复了', 'row-' + i + '-name');
+      seen[nm] = 1;
+      const f = 'row-' + i + '-times';
+      const tk = splitTok(r.times);
+      if (!tk.length) throw new InputError(nm + ' 的用时没填', f);
+      if (tk.length !== d.length) throw new InputError(nm + ' 填了 ' + tk.length + ' 个用时，计时点有 ' + d.length + ' 个，要一一对上', f);
+      const t = tk.map((x) => parseTime(x, f, nm));
+      for (let k = 0; k < t.length; k++) {
+        if (t[k] <= (k ? t[k - 1] : 0)) throw new InputError(nm + ' 的累计用时要一个比一个大（第 ' + (k + 1) + ' 个「' + tk[k] + '」没比前一个大）。填的是从起跑算起的累计用时，不是每段用时', f);
+      }
+      rows.push({ name: nm, t: t });
+    });
+    const fc = String(s.focus == null ? '' : s.focus).trim();
+    let focus = -1;
+    if (fc) { focus = rows.findIndex((r) => r.name === fc); if (focus < 0) throw new InputError('想看的人「' + fc + '」不在名单里', 'focus'); }
+    return { label: label, d: d, rows: rows, n: rows.length, m: d.length, focus: focus };
+  }
+
+  /* —— 距离坐标里的精确点：段号 k（0 起，段 k 是 d[k-1]→d[k]，d[-1]=0）+ 段内比例 p/q（0<p/q≤1，q>0） —— */
+  function segStart(P, k) { return k ? P.d[k - 1] : 0; }
+  function segLen(P, k) { return P.d[k] - segStart(P, k); }
+  function tAt(P, i, k) { return k < 0 ? 0 : P.rows[i].t[k]; }
+  /* 点的距离（有理数 num/den 厘米） */
+  function ptDist(P, pt) { const L = segLen(P, pt.k); return { num: segStart(P, pt.k) * pt.q + L * pt.p, den: pt.q }; }
+  /* 某人到达该点的用时（有理数 num/den 百分之一秒） */
+  function ptTime(P, i, pt) { const a = tAt(P, i, pt.k - 1), b = tAt(P, i, pt.k); return { num: a * pt.q + (b - a) * pt.p, den: pt.q }; }
+  function cmpPt(a, b) { return a.k - b.k || (a.p * b.q - b.p * a.q); }
+  /* 两人在每个计时点的用时差 δ_k = T_a − T_b（δ>0 表示 a 更晚到 = a 落后） */
+  function deltas(P, a, b) { const out = [0]; for (let k = 0; k < P.m; k++) out.push(P.rows[a].t[k] - P.rows[b].t[k]); return out; }
+
+  /* 两人之间的位置关系变化：返回分段符号与超越事件
+   * 事件：{ who: 超过的人, over: 被超的人, pt: 位置（第一次追平的点）, flat: 是否有一段并排 } */
+  function pairEvents(P, a, b) {
+    const dl = deltas(P, a, b);
+    const pieces = []; /* {sign, from:pt, to:pt}，sign：+1 = a 在后，−1 = a 在前，0 = 并排 */
+    for (let k = 0; k < P.m; k++) {
+      const x = dl[k], y = dl[k + 1];
+      const start = { k: k, p: 0, q: 1 }, end = { k: k, p: 1, q: 1 };
+      if (x === 0 && y === 0) pieces.push({ sign: 0, from: start, to: end });
+      else if ((x >= 0 && y >= 0) || (x <= 0 && y <= 0)) pieces.push({ sign: Math.sign(x || y), from: start, to: end, touchEnd: y === 0 });
+      else {
+        const mid = { k: k, p: Math.abs(x), q: Math.abs(x) + Math.abs(y) };
+        pieces.push({ sign: Math.sign(x), from: start, to: mid, touchEnd: true });
+        pieces.push({ sign: Math.sign(y), from: mid, to: end, touchEnd: false });
+      }
+    }
+    const ev = [];
+    let cur = 0, zeroFrom = null, flat = false;
+    for (const pc of pieces) {
+      if (pc.sign === 0) { if (!zeroFrom) zeroFrom = pc.from; flat = true; continue; }
+      if (cur !== 0 && pc.sign !== cur) {
+        ev.push({ who: pc.sign < 0 ? a : b, over: pc.sign < 0 ? b : a, pt: zeroFrom || pc.from, flat: flat });
+      }
+      cur = pc.sign; zeroFrom = pc.touchEnd ? pc.to : null; flat = false;
+    }
+    const endTie = dl[P.m] === 0;
+    return { ev: ev, endTie: endTie };
+  }
+  function normPt(pt) { if (pt.p === 0 && pt.k > 0) return { k: pt.k - 1, p: 1, q: 1 }; return pt; }
+
+  /* 某个点上谁在最前（可能并列）：比较 ptTime，分母相同（同一段同一比例） */
+  function leadersAt(P, pt) {
+    const ts = P.rows.map((r, i) => ptTime(P, i, pt).num);
+    const mn = Math.min.apply(null, ts);
+    return ts.map((x, i) => i).filter((i) => ts[i] === mn);
+  }
+  function ranksBy(arr) { return arr.map((x) => 1 + arr.filter((y) => y < x).length); }
+
+  /* 领头人时间线：把所有两两超越点和计时点排好，在每个小区间中点看谁领头 */
+  function leaderLine(P) {
+    const cuts = [];
+    for (let k = 0; k < P.m; k++) { cuts.push({ k: k, p: 0, q: 1 }); cuts.push({ k: k, p: 1, q: 1 }); }
+    for (let a = 0; a < P.n; a++) for (let b = a + 1; b < P.n; b++) {
+      const dl = deltas(P, a, b);
+      for (let k = 0; k < P.m; k++) { const x = dl[k], y = dl[k + 1]; if ((x > 0 && y < 0) || (x < 0 && y > 0)) cuts.push({ k: k, p: Math.abs(x), q: Math.abs(x) + Math.abs(y) }); }
+    }
+    cuts.sort(cmpPt);
+    const uniq = [];
+    for (const c of cuts) if (!uniq.length || cmpPt(uniq[uniq.length - 1], c) !== 0) uniq.push(c);
+    const spans = [];
+    for (let z = 0; z + 1 < uniq.length; z++) {
+      const A = uniq[z], B = uniq[z + 1];
+      if (A.k !== B.k) continue; /* 跨段时下一段从 p=0 开始，已有切点 */
+      const mid = { k: A.k, p: A.p * B.q + B.p * A.q, q: 2 * A.q * B.q };
+      const L = leadersAt(P, mid);
+      const key = L.join(',');
+      if (spans.length && spans[spans.length - 1].key === key) spans[spans.length - 1].to = B;
+      else spans.push({ key: key, who: L, from: A, to: B });
+    }
+    return spans;
+  }
+
+  /* 落后领头人多少秒随距离变化：分段线性，拐点只在计时点与领头换人处，所以把这些点连起来就是精确曲线 */
+  function gapLine(R) {
+    const P = R.P, pts = [{ k: 0, p: 0, q: 1 }];
+    for (let k = 0; k < P.m; k++) pts.push({ k: k, p: 1, q: 1 });
+    R.line.forEach((sp) => { pts.push(sp.from); pts.push(sp.to); });
+    pts.sort(cmpPt);
+    const out = [];
+    for (const pt of pts) {
+      const dd = ptDist(P, pt), x = dd.num / dd.den / 100;
+      if (out.length && Math.abs(out[out.length - 1].x - x) < 1e-9) continue;
+      const ts = P.rows.map((r, i) => { const q = ptTime(P, i, pt); return q.num / q.den; });
+      const mn = Math.min.apply(null, ts);
+      out.push({ x: x, t: ts, gap: ts.map((v) => v - mn) });
+    }
+    return out;
+  }
+  /* 任意米数处的状态（给拖动条用）：每人到这里的用时、落后领头多少、名次 */
+  function at(R, meters) {
+    const P = R.P, cm = Math.max(0, Math.min(R.D, Math.round(meters * 100)));
+    let k = 0; while (k < P.m - 1 && P.d[k] < cm) k++;
+    const pt = cm === 0 ? { k: 0, p: 0, q: 1 } : { k: k, p: cm - segStart(P, k), q: segLen(P, k) };
+    const ts = P.rows.map((r, i) => ptTime(P, i, pt));
+    const nums = ts.map((q) => q.num); /* 同一点分母相同 */
+    const mn = Math.min.apply(null, nums);
+    return { cm: cm, t: ts.map((q) => q.num / q.den), gap: nums.map((x) => (x - mn) / pt.q), rank: ranksBy(nums) };
+  }
+  /* 某人在用时 tcs（百分之一秒）时跑到了哪（厘米，浮点，只给画图用） */
+  function posAt(R, i, tcs) {
+    const P = R.P, t = P.rows[i].t;
+    if (tcs <= 0) return 0;
+    for (let k = 0; k < P.m; k++) {
+      const a = k ? t[k - 1] : 0;
+      if (tcs <= t[k]) return segStart(P, k) + segLen(P, k) * (tcs - a) / (t[k] - a);
+    }
+    return R.D;
+  }
+  function halfText(R) { return String(Number((R.D / 200).toFixed(3))); }
+  function distText(P, pt) { const q = ptDist(P, pt); return fmtD(rq(q.num, q.den)); }
+  function timeText(P, i, pt) { const q = ptTime(P, i, pt); return fmtT(rq(q.num, q.den)); }
+  function names(P, arr) { return arr.map((i) => P.rows[i].name).join('、'); }
+
+  function calculate(s) {
+    const P = parse(s);
+    const n = P.n, m = P.m, D = P.d[m - 1];
+    const fin = P.rows.map((r) => r.t[m - 1]);
+    const finRank = ranksBy(fin);
+    const best = Math.min.apply(null, fin);
+    const winners = fin.map((x, i) => i).filter((i) => fin[i] === best);
+    /* 半程：距离 D/2。找所在段，比例 (D/2 − 段起点)/段长 = (D − 2·起点)/(2·段长) */
+    let hk = 0; while (2 * P.d[hk] < D) hk++;
+    const hpt = { k: hk, p: D - 2 * segStart(P, hk), q: 2 * segLen(P, hk) };
+    const halfLead = leadersAt(P, hpt);
+    const halfTimes = P.rows.map((r, i) => ptTime(P, i, hpt));
+    const halfRank = ranksBy(halfTimes.map((x) => x.num));
+    const lied = halfLead.every((i) => winners.indexOf(i) < 0);
+    /* 每个计时点的名次 */
+    const cpRank = P.d.map((x, k) => ranksBy(P.rows.map((r) => r.t[k])));
+    /* 每段：段用时、速度、最快 */
+    const seg = [];
+    for (let k = 0; k < m; k++) {
+      const L = segLen(P, k);
+      const st = P.rows.map((r, i) => tAt(P, i, k) - tAt(P, i, k - 1));
+      const mn = Math.min.apply(null, st);
+      seg.push({ k: k, from: segStart(P, k), to: P.d[k], L: L, st: st, fastest: st.map((x, i) => i).filter((i) => st[i] === mn), sp: st.map((x) => speed(L, x)) });
+    }
+    /* 两两超越 */
+    const events = [];
+    const endTies = [];
+    for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) {
+      const pe = pairEvents(P, a, b);
+      pe.ev.forEach((e) => { e.pt = normPt(e.pt); events.push(e); });
+      if (pe.endTie) endTies.push([a, b]);
+    }
+    events.sort((x, y) => cmpPt(x.pt, y.pt) || x.who - y.who || x.over - y.over);
+    events.forEach((e) => { e.dist = distText(P, e.pt); e.time = timeText(P, e.who, e.pt); e.atMark = e.pt.p === e.pt.q ? e.pt.k : -1; });
+    const line = leaderLine(P);
+    const leadChanges = Math.max(0, line.length - 1);
+    /* 想看的人：没指定时，半程领头的第一个 */
+    const F = P.focus >= 0 ? P.focus : halfLead[0];
+    const R = { P: P, D: D, fin: fin, finRank: finRank, winners: winners, best: best, hpt: hpt, halfLead: halfLead, halfRank: halfRank, halfTimes: halfTimes, lied: lied, cpRank: cpRank, seg: seg, events: events, endTies: endTies, line: line, leadChanges: leadChanges, F: F };
+    R.st = lied ? 'lied' : (winners.length > 1 ? 'tie' : 'honest');
+    R.fx = focusInfo(R);
+    R.stamp = R.st === 'lied' ? '前半程骗人' : R.st === 'tie' ? '撞线并列' : '前半程没骗人';
+    R.facts = facts(R);
+    return R;
+  }
+
+  /* 关心的那个人：跟冠军（或者他是冠军时跟第二名）比，每段赚了/亏了多少，最后一段要快多少 */
+  function focusInfo(R) {
+    const P = R.P, F = R.F, m = P.m;
+    const others = R.fin.map((x, i) => i).filter((i) => i !== F);
+    const rivalT = Math.min.apply(null, others.map((i) => R.fin[i]));
+    const rival = others.filter((i) => R.fin[i] === rivalT)[0];
+    const iWin = R.fin[F] < rivalT;
+    /* 每段相对对手的得失（正 = F 这段比对手慢多少） */
+    const loss = R.seg.map((sg) => sg.st[F] - sg.st[rival]);
+    let worst = -1; for (let k = 0; k < m; k++) if (loss[k] > 0 && (worst < 0 || loss[k] > loss[worst])) worst = k;
+    let gain = -1; for (let k = 0; k < m; k++) if (loss[k] < 0 && (gain < 0 || loss[k] < loss[gain])) gain = k;
+    const margin = R.fin[F] - rivalT; /* >0 落后，=0 并列，<0 领先 */
+    const out = { F: F, rival: rival, iWin: iWin, margin: margin, loss: loss, worst: worst, gain: gain };
+    if (!iWin) {
+      out.need = margin + 1; /* 至少快 0.01 秒才能单独赢 */
+      const last = R.seg[m - 1].st[F];
+      out.lastNew = last - out.need;
+      out.lastOk = out.lastNew > 0;
+      if (out.lastOk) {
+        out.lastSp = speed(R.seg[m - 1].L, out.lastNew);
+        /* 跟他自己最快的一段、全场这段最快比一比（只报数，不评判能不能做到） */
+        let bestOwn = 0; for (let k = 0; k < m; k++) { const a = R.seg[k].L * R.seg[bestOwn].st[F], b = R.seg[bestOwn].L * R.seg[k].st[F]; if (a > b) bestOwn = k; }
+        out.bestOwn = bestOwn;
+        out.fasterThanOwnBest = R.seg[m - 1].L * R.seg[bestOwn].st[F] > R.seg[bestOwn].L * out.lastNew;
+        out.fasterThanField = out.lastNew < Math.min.apply(null, R.seg[m - 1].st);
+      }
+    } else {
+      out.lead = -margin; /* 领先多少 */
+    }
+    return out;
+  }
+
+  function facts(R) {
+    const P = R.P, out = [], hl = R.halfLead[0];
+    const behind = P.rows.map((r, i) => i).filter((i) => R.halfLead.indexOf(i) < 0).sort((a, b) => R.halfTimes[a].num - R.halfTimes[b].num);
+    const hq = R.halfTimes[hl];
+    out.push('半程 ' + halfText(R) + ' 米：' + names(P, R.halfLead) + ' 领头' + (behind.length ? '，' + behind.slice(0, 3).map((i) => P.rows[i].name + ' 落后 ' + fmtGap(rq(R.halfTimes[i].num - hq.num, hq.den))).join('，') : ''));
+    const wn = R.winners[0];
+    out.push('终点：' + names(P, R.winners) + ' ' + fmtT(R.best) + (R.winners.length > 1 ? '（并列）' : '') + '；半程领头的 ' + P.rows[hl].name + ' 最后第 ' + R.finRank[hl] + '，' + (R.fin[hl] === R.best ? '用时 ' + fmtT(R.fin[hl]) : '慢 ' + fmtGap(R.fin[hl] - R.best)));
+    out.push(R.events.length ? '中途一共 ' + R.events.length + ' 次超越，领头的人换了 ' + R.leadChanges + ' 次' : '没有任何人超过别人：起跑后的先后一直保持到终点');
+    const lastSeg = R.seg[P.m - 1];
+    out.push('最后一段（' + fmtD(lastSeg.from) + '–' + fmtD(lastSeg.to) + ' 米）最快的是 ' + names(P, lastSeg.fastest) + ' ' + fmtT(lastSeg.st[lastSeg.fastest[0]]) + '，' + P.rows[hl].name + ' 用了 ' + fmtT(lastSeg.st[hl]));
+    if (R.endTies.length) out.push('撞线同时到：' + R.endTies.map((x) => names(P, x)).join('；'));
+    return out;
+  }
+  function withTimes(s, i, ts) {
+    const c = JSON.parse(JSON.stringify(s));
+    c.rows[i].times = ts.map(fmtT).join(' ');
+    return c;
+  }
+  function suggestions(s, R) {
+    const P = R.P, fx = R.fx, F = fx.F, m = P.m, nm = P.rows[F].name, rv = P.rows[fx.rival].name;
+    const out = [];
+    if (!fx.iWin) {
+      if (fx.lastOk) {
+        const ts = P.rows[F].t.slice(); ts[m - 1] -= fx.need;
+        out.push({ id: 'last', text: nm + ' 最后一段（' + fmtD(R.seg[m - 1].from) + '–' + fmtD(R.seg[m - 1].to) + ' 米）快 ' + fmtGap(fx.need) + '，就能比 ' + rv + ' 先到：这段从 ' + fmtT(R.seg[m - 1].st[F]) + ' 变成 ' + fmtT(fx.lastNew), apply: withTimes(s, F, ts) });
+      }
+      if (fx.worst >= 0) {
+        const k = fx.worst, ts = P.rows[F].t.slice();
+        for (let z = k; z < m; z++) ts[z] -= fx.loss[k];
+        out.push({ id: 'worst', text: nm + ' 亏得最多的是 ' + fmtD(R.seg[k].from) + '–' + fmtD(R.seg[k].to) + ' 米，比 ' + rv + ' 慢 ' + fmtGap(fx.loss[k]) + '。把这一段跑成 ' + rv + ' 的 ' + fmtT(R.seg[k].st[fx.rival]) + '（其他段不变）试试', apply: withTimes(s, F, ts) });
+      }
+    }
+    const w = R.winners[0];
+    if (w !== F) { const c = JSON.parse(JSON.stringify(s)); c.focus = P.rows[w].name; out.push({ id: 'focusWin', text: '换成看冠军 ' + P.rows[w].name + '：他是在哪儿、哪一段把比赛拿下的', apply: c }); }
+    else {
+      const c = JSON.parse(JSON.stringify(s)); c.focus = rv;
+      out.push({ id: 'focusRival', text: '换成看 ' + rv + '：他差在哪一段、最后一段要快多少', apply: c });
+    }
+    return out;
+  }
+
+  function evText(P, e) {
+    const where = e.atMark >= 0 ? '在 ' + e.dist + ' 米计时点' : '在约 ' + e.dist + ' 米处';
+    return P.rows[e.who].name + ' 超过 ' + P.rows[e.over].name + '（' + where + (e.flat ? '，之前并排了一段' : '') + '，这时跑了约 ' + e.time + (e.time.indexOf(":") < 0 ? " 秒" : "") + '）';
+  }
+
+  /* —— 导出 —— */
+  function csvCell(x) { const t = String(x); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }
+  function splitHead(R) { const h = ['选手']; R.P.d.forEach((d) => { h.push(fmtD(d) + '米累计'); h.push(fmtD(d) + '米名次'); }); return h.concat(['半程名次', '最后名次']); }
+  function splitRows(R) { return R.P.rows.map((r, i) => { const o = [r.name]; r.t.forEach((t, k) => { o.push(fmtT(t)); o.push(R.cpRank[k][i]); }); return o.concat([R.halfRank[i], R.finRank[i]]); }); }
+  function segHead(R) { return ['选手'].concat(R.seg.map((sg) => fmtD(sg.from) + '–' + fmtD(sg.to) + '米')); }
+  function segRows(R) { return R.P.rows.map((r, i) => [r.name].concat(R.seg.map((sg) => fmtT(sg.st[i]) + '秒 ' + sg.sp[i].ms + 'm/s'))); }
+  function toCSV(R, when) {
+    const L = [];
+    L.push(['前半程骗人', R.P.label || '', when].map(csvCell).join(','));
+    L.push(''); L.push(splitHead(R).map(csvCell).join(','));
+    splitRows(R).forEach((r) => L.push(r.map(csvCell).join(',')));
+    L.push(''); L.push(segHead(R).map(csvCell).join(','));
+    segRows(R).forEach((r) => L.push(r.map(csvCell).join(',')));
+    L.push(''); L.push(['超越', '位置（米）', '时刻（秒）', '计时点上'].join(','));
+    R.events.forEach((e) => L.push([R.P.rows[e.who].name + ' 超过 ' + R.P.rows[e.over].name, e.dist, e.time, e.atMark >= 0 ? '是' : '否'].map(csvCell).join(',')));
+    return '\uFEFF' + L.join('\n') + '\n';
+  }
+  function headline(R) {
+    const P = R.P;
+    const hl = names(P, R.halfLead), wn = names(P, R.winners);
+    if (R.st === 'lied') return '半程领头的是 ' + hl + '，最后赢的是 ' + wn + '。';
+    if (R.st === 'tie') return '半程领头的 ' + hl + ' 撞线时跟人并列第一（' + wn + '）。';
+    return '半程领头的 ' + hl + ' 一路守到了终点。';
+  }
+  function toMD(R, when, sg) {
+    const P = R.P, L = [];
+    L.push('# 前半程骗人' + (P.label ? '：' + P.label : ''));
+    L.push(''); L.push('导出时间：' + when + '。模型：计时点之间按匀速算。数据是自己填的。');
+    L.push(''); L.push('## 结论'); L.push(''); L.push(headline(R));
+    L.push(''); R.facts.forEach((f) => L.push('- ' + f));
+    L.push(''); L.push('## 分段累计与名次'); L.push('');
+    const h = splitHead(R); L.push('| ' + h.join(' | ') + ' |'); L.push('|' + h.map(() => '---').join('|') + '|');
+    splitRows(R).forEach((r) => L.push('| ' + r.join(' | ') + ' |'));
+    L.push(''); L.push('## 每段用时与速度'); L.push('');
+    const h2 = segHead(R); L.push('| ' + h2.join(' | ') + ' |'); L.push('|' + h2.map(() => '---').join('|') + '|');
+    segRows(R).forEach((r) => L.push('| ' + r.join(' | ') + ' |'));
+    L.push(''); L.push('## 超越记录'); L.push('');
+    if (R.events.length) R.events.forEach((e) => L.push('- ' + evText(P, e))); else L.push('- 没有人超过别人：起步后的先后顺序一直到终点');
+    if (sg && sg.length) { L.push(''); L.push('## 可以试的'); L.push(''); sg.forEach((x) => L.push('- ' + x.text)); }
+    L.push(''); L.push('> 两个计时点之间按匀速算，超越点是这个假设下的位置；平均速度的变化不等于某一刻的加速度。');
+    return L.join('\n') + '\n';
+  }
+
+  const DEFAULT = {
+    label: '校运会 400 米决赛（虚构）',
+    marks: '100 200 300 400',
+    focus: '',
+    rows: [
+      { name: '阿杰', times: '12.8 26.4 41.6 58.9' },
+      { name: '小林', times: '13.6 27.6 41.9 56.8' },
+      { name: '大周', times: '13.2 27.0 41.2 57.4' },
+      { name: '老马', times: '14.1 28.9 43.8 59.6' },
+    ],
+  };
+  const PRESETS = [
+    ['默认：400 米四个人', DEFAULT],
+    ['百米每 10 米一个点', {
+      label: '百米分段（虚构）', marks: '10 20 30 40 50 60 70 80 90 100', focus: '',
+      rows: [
+        { name: '起跑快', times: '1.75 2.80 3.78 4.72 5.64 6.56 7.49 8.43 9.39 10.37' },
+        { name: '后程猛', times: '1.88 2.95 3.92 4.84 5.74 6.63 7.52 8.41 9.31 10.22' },
+        { name: '匀速型', times: '1.83 2.88 3.86 4.79 5.70 6.61 7.52 8.44 9.36 10.29' },
+      ],
+    }],
+    ['200 米游泳四个 50', {
+      label: '泳池 200 米（虚构）', marks: '50 100 150 200', focus: '',
+      rows: [
+        { name: '一号道', times: '30.1 1:03.5 1:37.8 2:11.0' },
+        { name: '二号道', times: '31.4 1:04.9 1:38.2 2:10.4' },
+        { name: '三号道', times: '30.6 1:04.0 1:38.2 2:12.3' },
+      ],
+    }],
+  ];
+
+  const API = { posAt, gapLine, at, halfText, KEYS, MAX_ROWS, MIN_ROWS, MAX_MARKS, MIN_MARKS, InputError, parse, calculate, suggestions, pairEvents, leaderLine, leadersAt, ptDist, ptTime, cmpPt, deltas, fmtT, fmtD, fmtGap, fmtInt, speed, rq, parseTime, splitTok, evText, headline, names, toCSV, toMD, DEFAULT, PRESETS };
+  root.AppCore = API;
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+  </script>
+  <script>
+/* 前半程骗人 · 界面层 */
+(function () {
+  'use strict';
+  const C = window.AppCore;
+  const KEY = 'first-half-lies:v1';
+  const NAME = '前半程骗人';
+  const copy = (o) => JSON.parse(JSON.stringify(o));
+  const { DEFAULT, PRESETS, KEYS, fmtT, fmtD, fmtGap } = C;
+  const INPUTS = ['label', 'marks'];
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const FF = '"PingFang SC","Microsoft YaHei",sans-serif';
+  const COL = { lied: '#b3362b', tie: '#b7791f', honest: '#2c7a4b', main: '#8a4b1f', grid: '#ece6da', txt: '#776f62', ink: '#23201b' };
+  const LANE = ['#b3362b', '#2d5b8a', '#2c7a4b', '#b7791f', '#7a3e9d', '#1f8a8a', '#c2185b', '#5d564b'];
+  let state = copy(DEFAULT);
+  let last = null;
+  const SHOW_EV = 12;
+  let evOpen = false;
+  let scrubM = null; /* 拖动条位置（米）；null = 半程 */
+
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* 隐私模式忽略 */ } }
+  function load() {
+    try {
+      const o = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (!o || typeof o !== 'object' || Array.isArray(o)) return null;
+      const s = {};
+      for (const k of KEYS) {
+        if (k === 'rows') continue;
+        if (o[k] != null && typeof o[k] === 'object') return null;
+        s[k] = o[k] == null ? '' : String(o[k]).slice(0, 200);
+      }
+      if (!Array.isArray(o.rows) || o.rows.length < 1 || o.rows.length > C.MAX_ROWS) return null;
+      s.rows = [];
+      for (const r of o.rows) {
+        if (!r || typeof r !== 'object' || Array.isArray(r)) return null;
+        const x = {};
+        for (const f of ['name', 'times']) { if (r[f] != null && typeof r[f] === 'object') return null; x[f] = r[f] == null ? '' : String(r[f]).slice(0, 300); }
+        s.rows.push(x);
+      }
+      return s;
+    } catch (e) { return null; }
+  }
+
+  function rowInputs() {
+    $('rows').innerHTML = state.rows.map((r, i) => '<div class="rrow">' +
+      '<input id="row-' + i + '-name" data-i="' + i + '" data-f="name" maxlength="20" aria-label="第 ' + (i + 1) + ' 个人的名字" value="' + esc(r.name) + '">' +
+      '<input id="row-' + i + '-times" data-i="' + i + '" data-f="times" maxlength="300" inputmode="decimal" aria-label="第 ' + (i + 1) + ' 个人的累计用时" value="' + esc(r.times) + '">' +
+      '<button class="ghost" data-del="' + i + '"' + (state.rows.length <= C.MIN_ROWS ? ' disabled' : '') + ' aria-label="删掉第 ' + (i + 1) + ' 个人">删</button></div>').join('');
+    $('addRow').disabled = state.rows.length >= C.MAX_ROWS;
+    focusOptions();
+  }
+  function focusOptions() {
+    const names = state.rows.map((r, i) => String(r.name).trim() || '选手 ' + (i + 1));
+    const cur = String(state.focus || '');
+    $('focus').innerHTML = '<option value="">（半程领头的那位）</option>' + names.map((n) => '<option value="' + esc(n) + '"' + (n === cur ? ' selected' : '') + '>' + esc(n) + '</option>').join('') +
+      (cur && names.indexOf(cur) < 0 ? '<option value="' + esc(cur) + '" selected>' + esc(cur) + '（不在名单）</option>' : '');
+  }
+  function fill() { INPUTS.forEach((k) => { $(k).value = state[k]; }); rowInputs(); }
+
+  const nm = (R, i) => R.P.rows[i].name;
+  function bigText(R) {
+    const P = R.P;
+    if (R.st === 'lied') return '半程领头 <b>' + esc(C.names(P, R.halfLead)) + '</b>，最后赢的是 <b>' + esc(C.names(P, R.winners)) + '</b>';
+    if (R.st === 'tie') return '半程领头 <b>' + esc(C.names(P, R.halfLead)) + '</b>，撞线并列第一：<b>' + esc(C.names(P, R.winners)) + '</b>';
+    return '半程领头 <b>' + esc(C.names(P, R.halfLead)) + '</b>，一路守到终点';
+  }
+  const plain = (h) => h.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+
+  function sheetHTML(R) {
+    const P = R.P;
+    let h = '<tr><th style="text-align:left">名字</th>';
+    R.seg.forEach((sg) => { h += '<th>' + fmtD(sg.from) + '–' + fmtD(sg.to) + '</th>'; });
+    h += '<th>终点</th></tr>';
+    P.rows.forEach((r, i) => {
+      h += '<tr><td class="nm" title="' + esc(r.name) + '">' + esc(r.name) + '</td>';
+      R.seg.forEach((sg, k) => {
+        const rk = R.cpRank[k][i];
+        h += '<td class="' + (sg.fastest.indexOf(i) >= 0 ? 'fast' : '') + '">' + fmtT(sg.st[i]) + '<span class="rk' + (rk === 1 ? ' r1' : '') + '">' + rk + '</span><span class="sub">累计 ' + fmtT(r.t[k]) + '</span></td>';
+      });
+      h += '<td><b>' + fmtT(R.fin[i]) + '</b><span class="rk' + (R.finRank[i] === 1 ? ' r1' : '') + '">' + R.finRank[i] + '</span></td></tr>';
+    });
+    return h;
+  }
+  function eventsHTML(R) {
+    if (!R.events.length) return '<li>没有人超过别人：起跑后的先后顺序一直保持到终点。</li>';
+    const P = R.P;
+    return R.events.map((e, z) => {
+      const isLead = R.line.some((sp, z) => z > 0 && sp.who.indexOf(e.who) >= 0 && R.line[z - 1].who.indexOf(e.over) >= 0 && C.cmpPt(sp.from, e.pt) === 0);
+      return '<li class="' + (isLead ? 'lead' : '') + (z >= SHOW_EV ? ' more' : '') + '">' + esc(C.evText(P, e)) + '</li>';
+    }).join('');
+  }
+  function focusHTML(R) {
+    const P = R.P, fx = R.fx, F = fx.F, rv = nm(R, fx.rival), m = P.m;
+    let h = '';
+    if (fx.iWin) h += '<p><b>' + esc(nm(R, F)) + '</b> 赢了，比第二名 ' + esc(rv) + ' 快 ' + fmtGap(fx.lead) + '。下面是每段跟 ' + esc(rv) + ' 比赚了还是亏了。</p>';
+    else if (fx.margin === 0) h += '<p><b>' + esc(nm(R, F)) + '</b> 跟 ' + esc(rv) + ' 同时撞线。下面是每段跟 ' + esc(rv) + ' 比赚了还是亏了。</p>';
+    else h += '<p><b>' + esc(nm(R, F)) + '</b> 最后第 ' + R.finRank[F] + '，比冠军 ' + esc(rv) + ' 慢 ' + fmtGap(fx.margin) + '。下面是每段跟 ' + esc(rv) + ' 比赚了还是亏了。</p>';
+    const mx = Math.max(1, ...fx.loss.map(Math.abs));
+    h += '<div class="bars">' + R.seg.map((sg, k) => {
+      const v = fx.loss[k], w = Math.abs(v) / mx * 50;
+      const st = v > 0 ? 'left:50%;width:' + w + '%;background:#b3362b' : 'right:50%;width:' + w + '%;background:#2c7a4b';
+      return '<div class="bar"><span>' + fmtD(sg.from) + '–' + fmtD(sg.to) + ' 米</span><span class="ax"><i></i><b style="' + st + '"></b></span><span>' + (v > 0 ? '亏 ' : v < 0 ? '赚 ' : '平 ') + fmtT(Math.abs(v)) + '</span></div>';
+    }).join('') + '</div>';
+    h += '<p class="muted">中线左边绿 = 这段比 ' + esc(rv) + ' 快，右边红 = 慢。</p>';
+    if (!fx.iWin) {
+      if (fx.worst >= 0) h += '<p>亏得最多的一段：<b>' + fmtD(R.seg[fx.worst].from) + '–' + fmtD(R.seg[fx.worst].to) + ' 米</b>，慢 ' + fmtGap(fx.loss[fx.worst]) + '。</p>';
+      if (fx.lastOk) {
+        h += '<p>只改最后一段的话，要快 <b>' + fmtGap(fx.need) + '</b>（从 ' + fmtT(R.seg[m - 1].st[F]) + ' 到 ' + fmtT(fx.lastNew) + '，平均 ' + fx.lastSp.ms + ' 米/秒）才能单独先到。';
+        h += (fx.fasterThanField ? '这比全场这段最快的人还快。' : '') + (fx.fasterThanOwnBest ? '这也比他自己任何一段的平均速度都快。' : '') + '</p>';
+      } else h += '<p>只改最后一段追不回来：差距比他这段全部用时还长。</p>';
+    }
+    return h;
+  }
+
+  /* ── 画图 ── */
+  function fitText(g, t, w) { let s = String(t); if (g.measureText(s).width <= w) return s; while (s.length > 1 && g.measureText(s + '…').width > w) s = s.slice(0, -1); return s + '…'; }
+  /* 跑道：某一米时每个人在哪（以领头的人到这一米的时刻为准，其他人在身后几米） */
+  function drawTrack(g, R, W, H, fs, meters) {
+    const P = R.P, A = C.at(R, meters), n = P.n;
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
+    const lead = A.t.indexOf(Math.min(...A.t)), tl = A.t[lead];
+    const pos = P.rows.map((r, i) => C.posAt(R, i, tl) / 100); /* 领头者到达此处时各人位置 */
+    const here = A.cm / 100;
+    let behindMax = Math.max(...pos.map((p) => here - p));
+    const win = Math.max(R.D / 100 * 0.06, behindMax * 1.25, 5);
+    g.font = fs + 'px ' + FF;
+    const nameW = Math.min(W * 0.3, Math.max(...P.rows.map((r) => g.measureText(r.name).width)) + 12);
+    const labW = Math.max(...A.gap.map((v, i) => g.measureText(A.rank[i] === 1 ? '第 1' : '第 ' + A.rank[i] + ' · 慢 ' + (v / 100).toFixed(2)).width)) + 18;
+    const x0 = nameW + 6, x1 = W - labW - 8, top = 4, bot = H - fs - 10, laneH = (bot - top) / n;
+    const lo = here - win, xv = (v) => x0 + (x1 - x0) * (v - lo) / (here - lo);
+    for (let i = 0; i < n; i++) {
+      const y = top + laneH * i;
+      g.fillStyle = i % 2 ? '#f6efe2' : '#efe5d2'; g.fillRect(x0, y, x1 - x0 + 4, laneH);
+      g.fillStyle = COL.ink; g.textAlign = 'right'; g.textBaseline = 'middle';
+      g.font = (A.rank[i] === 1 ? 'bold ' : '') + fs + 'px ' + FF;
+      g.fillText(fitText(g, P.rows[i].name, nameW - 6), nameW, y + laneH / 2);
+      const x = Math.max(x0 + 6, Math.min(x1 - 2, xv(pos[i])));
+      g.fillStyle = LANE[i % LANE.length]; g.beginPath(); g.arc(x, y + laneH / 2, Math.max(4, Math.min(9, laneH * 0.32)), 0, 7); g.fill();
+      g.font = fs + 'px ' + FF; g.textAlign = 'left'; g.fillStyle = A.rank[i] === 1 ? COL.main : COL.txt;
+      const gap = A.gap[i] / 100;
+      g.fillText(A.rank[i] === 1 ? '第 1' : '第 ' + A.rank[i] + ' · 慢 ' + gap.toFixed(2), x1 + 8, y + laneH / 2);
+    }
+    g.strokeStyle = COL.main; g.lineWidth = 2; g.beginPath(); g.moveTo(xv(here), top); g.lineTo(xv(here), bot); g.stroke();
+    g.fillStyle = COL.txt; g.font = (fs - 1) + 'px ' + FF; g.textBaseline = 'top'; g.textAlign = 'right';
+    g.fillText(fmtD(Math.round(here * 100)) + ' 米', xv(here), bot + 4);
+    g.textAlign = 'left'; g.fillText('← 身后 ' + Number(win.toFixed(1)) + ' 米', x0, bot + 4);
+    g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.lineWidth = 1;
+  }
+  /* 落后领头几秒随距离：精确折线 */
+  function drawGap(g, R, W, H, fs, meters) {
+    const P = R.P, L = C.gapLine(R), n = P.n;
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
+    g.font = fs + 'px ' + FF;
+    const mx = Math.max(0.1, ...L.map((p) => Math.max(...p.gap))) / 100;
+    const raw = mx / 4, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const tick = [1, 2, 5, 10].map((m) => m * mag).find((t) => t >= raw) || raw;
+    const top = Math.ceil(mx / tick) * tick;
+    const lw = g.measureText(String(+top.toFixed(3))).width + 10;
+    const nameW = Math.min(W * 0.26, Math.max(...P.rows.map((r) => g.measureText(r.name).width)) + 14);
+    const x0 = lw + 4, x1 = W - nameW - 4, y0 = 10, y1 = H - fs - 30;
+    const D = R.D / 100;
+    const xv = (v) => x0 + (x1 - x0) * v / D, yv = (v) => y0 + (y1 - y0) * v / top;
+    g.textAlign = 'right'; g.textBaseline = 'middle';
+    for (let v = 0; v <= top + 1e-9; v += tick) { const y = yv(v); g.strokeStyle = COL.grid; g.beginPath(); g.moveTo(x0, y); g.lineTo(x1, y); g.stroke(); g.fillStyle = COL.txt; g.fillText(String(+v.toFixed(3)), x0 - 6, y); }
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    const marks = [0].concat(P.d.map((d) => d / 100));
+    marks.forEach((d) => { const x = xv(d); g.strokeStyle = COL.grid; g.beginPath(); g.moveTo(x, y0); g.lineTo(x, y1); g.stroke(); });
+    /* 刻度字：终点一定写，其余从左到右写，跟已写的（含终点）挤在一起就跳过 */
+    const endT = fmtD(Math.round(D * 100)), endW = g.measureText(endT).width, endX = Math.min(xv(D), x1 - endW / 2);
+    let lastR = -1e9;
+    g.fillStyle = COL.txt;
+    marks.slice(0, -1).forEach((d) => { const t = fmtD(Math.round(d * 100)), tw = g.measureText(t).width, x = Math.max(x0 + tw / 2 - 4, xv(d)); if (x - tw / 2 > lastR + 6 && x + tw / 2 < endX - endW / 2 - 6) { g.fillText(t, x, y1 + 4); lastR = x + tw / 2; } });
+    g.fillText(endT, endX, y1 + 4);
+    g.fillText('距离（米）；纵轴：落后领头的人几秒', (x0 + x1) / 2, y1 + fs + 10);
+    const hx = xv(D / 2); g.setLineDash([4, 4]); g.strokeStyle = '#c3b9a6'; g.beginPath(); g.moveTo(hx, y0); g.lineTo(hx, y1); g.stroke(); g.setLineDash([]);
+    g.fillStyle = COL.txt; g.textAlign = 'left'; g.textBaseline = 'top'; g.fillText('半程', hx + 4, y0);
+    if (meters != null) { const sx = xv(meters); g.strokeStyle = COL.main; g.lineWidth = 1.5; g.beginPath(); g.moveTo(sx, y0); g.lineTo(sx, y1); g.stroke(); g.lineWidth = 1; }
+    const endY = [];
+    for (let i = 0; i < n; i++) {
+      g.strokeStyle = LANE[i % LANE.length]; g.lineWidth = R.winners.indexOf(i) >= 0 ? 3 : 2;
+      g.beginPath(); L.forEach((p, z) => { const x = xv(p.x), y = yv(p.gap[i] / 100); if (z) g.lineTo(x, y); else g.moveTo(x, y); }); g.stroke();
+      endY.push({ i: i, y: yv(L[L.length - 1].gap[i] / 100) });
+    }
+    g.lineWidth = 1;
+    endY.sort((a, b) => a.y - b.y);
+    const gapMin = fs + 3;
+    for (let z = 1; z < endY.length; z++) if (endY[z].y - endY[z - 1].y < gapMin) endY[z].y = endY[z - 1].y + gapMin;
+    const over = endY.length ? endY[endY.length - 1].y - (y1 + fs) : 0;
+    if (over > 0) endY.forEach((e) => { e.y -= over; });
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    endY.forEach((e) => { g.fillStyle = LANE[e.i % LANE.length]; g.font = (R.winners.indexOf(e.i) >= 0 ? 'bold ' : '') + fs + 'px ' + FF; g.fillText(fitText(g, P.rows[e.i].name, nameW - 6), x1 + 6, e.y); });
+    g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  }
+  function sized(id, hDesk, hMob) {
+    const cv = $(id), dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = W < 500 ? hMob : hDesk;
+    cv.style.height = H + 'px'; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); return { g, W, H, fs: W < 500 ? 11 : 12 };
+  }
+  function scrubMeters(R) { return scrubM == null ? R.D / 200 : Math.min(scrubM, R.D / 100); }
+  function renderTrack(R) {
+    const m = scrubMeters(R), A = C.at(R, m), P = R.P;
+    const c = sized('track', Math.max(150, P.n * 34 + 30), Math.max(130, P.n * 28 + 28));
+    drawTrack(c.g, R, c.W, c.H, c.fs, m);
+    const ld = A.rank.map((r, i) => i).filter((i) => A.rank[i] === 1);
+    $('scrubTxt').textContent = fmtD(A.cm) + ' 米 · 领头 ' + C.names(P, ld);
+    $('trackNote').textContent = '圆点 = 领头的人跑到 ' + fmtD(A.cm) + ' 米那一刻，其他人在哪；右边是到这一米比领头的人慢几秒。半程是 ' + C.halfText(R) + ' 米。';
+  }
+  function renderGap(R) { const c = sized('gap', 260, 220); drawGap(c.g, R, c.W, c.H, c.fs, scrubMeters(R)); }
+  function renderCanvas(R) { renderTrack(R); renderGap(R); }
+  function sugList(sg) {
+    $('sugCard').style.display = sg.length ? '' : 'none';
+    $('sugs').innerHTML = sg.map((s, k) => '<div class="sug"><span>' + esc(s.text) + '</span><button class="ghost" data-sug="' + s.id + '" data-k="' + k + '">代回</button></div>').join('');
+    [].forEach.call($('sugs').querySelectorAll('button'), (b) => b.addEventListener('click', () => { state = copy(sg[+b.dataset.k].apply); fill(); run(); }));
+  }
+
+  function run() {
+    document.querySelectorAll('.bad').forEach((el) => el.classList.remove('bad'));
+    $('error').style.display = 'none';
+    try {
+      const R = C.calculate(state);
+      const sg = C.suggestions(state, R);
+      $('out').style.display = '';
+      $('stamp').textContent = R.stamp; $('stamp').className = 'stamp ' + R.st;
+      $('big').innerHTML = bigText(R);
+      $('facts').innerHTML = R.facts.map((f) => '<li>' + esc(f) + '</li>').join('');
+      $('sheet').innerHTML = sheetHTML(R);
+      $('events').innerHTML = eventsHTML(R);
+      const more = Math.max(0, R.events.length - SHOW_EV);
+      $('events').classList.toggle('open', evOpen);
+      $('evMore').style.display = more ? '' : 'none';
+      $('evMore').textContent = evOpen ? '收起，只看前 ' + SHOW_EV + ' 次' : '还有 ' + more + ' 次，展开全部';
+      $('focusTitle').textContent = '细看 ' + nm(R, R.fx.F) + '：差在哪一段';
+      $('focusBox').innerHTML = focusHTML(R);
+      const sc = $('scrub'); sc.max = String(R.D / 100); sc.step = R.D >= 100000 ? '10' : R.D >= 10000 ? '1' : '0.5'; sc.value = String(scrubMeters(R));
+      last = { r: R, sg };
+      renderCanvas(R); sugList(sg);
+    } catch (e) {
+      last = null;
+      if (e.field) { const el = $(e.field === 'rows' ? 'rows' : e.field); if (el) el.classList.add('bad'); }
+      $('error').textContent = '算不了：' + e.message; $('error').style.display = 'block';
+      $('out').style.display = 'none';
+    }
+    save();
+  }
+
+  /* ── 导出 ── */
+  function stamp() { const d = new Date(), z = (n) => String(n).padStart(2, '0'); return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()); }
+  function download(name, blob) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); }
+  function wrap(g, t, w) {
+    const NOHEAD = '，。、；：！？）」』”%·→｜/';
+    const out = []; let line = [];
+    const toks = String(t).match(/[0-9][0-9.,:]*|[A-Za-z_][A-Za-z0-9_.\-]*|[\s\S]/g) || [];
+    const width = (a) => g.measureText(a.join('')).width;
+    for (const tk of toks) {
+      if (line.length && width(line.concat([tk])) > w) {
+        const carry = [tk];
+        while (line.length > 1 && (NOHEAD.indexOf(carry[0][0]) >= 0 || '（「『“'.indexOf(line[line.length - 1]) >= 0)) carry.unshift(line.pop());
+        out.push(line.join(''));
+        line = carry; if (/^\s+$/.test(line[0])) line.shift();
+      } else line.push(tk);
+    }
+    if (line.length) out.push(line.join('')); return out;
+  }
+  function drawPNG(Lx) {
+    const R = Lx.r, P = R.P;
+    const Wd = 1080, H = 1350, X = 64, TW = 952;
+    const cv = document.createElement('canvas'); cv.width = Wd; cv.height = H;
+    const g = cv.getContext('2d');
+    g.fillStyle = '#f4f1ea'; g.fillRect(0, 0, Wd, H);
+    g.fillStyle = '#ffffff'; g.fillRect(32, 32, Wd - 64, H - 64);
+    g.fillStyle = COL.txt; g.font = '22px ' + FF;
+    g.fillText(fitText(g, NAME + (P.label ? ' · ' + P.label : ''), TW - 300), X, 88);
+    g.save(); g.translate(X + TW - 130, 76); g.rotate(-0.05);
+    g.strokeStyle = g.fillStyle = COL[R.st]; g.lineWidth = 4; g.font = 'bold 28px ' + FF;
+    const sw = Math.max(150, g.measureText(R.stamp).width + 36);
+    g.strokeRect(-sw / 2, -28, sw, 50); g.textAlign = 'center'; g.fillText(R.stamp, 0, 8); g.restore();
+    g.fillStyle = COL.ink;
+    let bf = 42; g.font = 'bold ' + bf + 'px ' + FF;
+    const bt = plain(bigText(R));
+    while (bf > 26 && g.measureText(bt).width > TW) { bf -= 2; g.font = 'bold ' + bf + 'px ' + FF; }
+    let y = 160;
+    wrap(g, bt, TW).slice(0, 2).forEach((l) => { g.fillText(l, X, y); y += bf + 10; });
+    y += 6;
+    g.save(); g.translate(X, y); drawGap(g, R, TW, 400, 20, null); g.restore(); y += 424;
+    g.font = '23px ' + FF; g.fillStyle = COL.ink;
+    for (const f of R.facts) { const ls = wrap(g, '· ' + f, TW); if (y + ls.length * 32 > H - 130) break; ls.forEach((l) => { g.fillText(l, X, y); y += 32; }); y += 3; }
+    y += 8;
+    if (R.events.length && y + 70 < H - 130) { g.fillStyle = COL.main; g.font = 'bold 22px ' + FF; g.fillText('谁在哪儿超过了谁', X, y + 4); y += 36; g.font = '21px ' + FF; g.fillStyle = COL.ink; }
+    for (const e of R.events.slice(0, 4)) { const ls = wrap(g, '· ' + C.evText(P, e), TW); if (y + ls.length * 30 > H - 120) break; ls.forEach((l) => { g.fillText(l, X, y); y += 30; }); y += 3; }
+    y += 8;
+    if (Lx.sg.length && y + 70 < H - 110) { g.fillStyle = COL.main; g.font = 'bold 22px ' + FF; g.fillText('可以试的', X, y + 4); y += 36; g.font = '21px ' + FF; g.fillStyle = COL.ink; }
+    for (const sg of Lx.sg) { const ls = wrap(g, '· ' + sg.text, TW); if (y + ls.length * 30 > H - 110) break; ls.forEach((l) => { g.fillText(l, X, y); y += 30; }); y += 3; }
+    g.fillStyle = COL.txt; g.font = '18px ' + FF;
+    ['两个计时点之间按匀速算；成绩是你自己填的。', '默认数据为虚构示例。'].forEach((l, i) => g.fillText(fitText(g, l, TW), X, H - 74 + i * 27));
+    return Promise.resolve(cv);
+  }
+  function backup() {
+    const R = last.r, P = R.P;
+    return { app: NAME, version: 1, savedAt: stamp(), input: copy(state), result: { status: R.st, stamp: R.stamp, facts: R.facts, halfMeters: C.halfText(R),
+      halfLeaders: R.halfLead.map((i) => nm(R, i)), winners: R.winners.map((i) => nm(R, i)), winningTime: fmtT(R.best),
+      finish: P.rows.map((r, i) => ({ name: r.name, time: fmtT(R.fin[i]), rank: R.finRank[i], halfRank: R.halfRank[i] })),
+      segments: R.seg.map((sg) => ({ from: fmtD(sg.from), to: fmtD(sg.to), times: sg.st.map(fmtT), fastest: sg.fastest.map((i) => nm(R, i)) })),
+      overtakes: R.events.map((e) => ({ who: nm(R, e.who), over: nm(R, e.over), meters: e.dist, at: e.time, atCheckpoint: e.atMark >= 0 })),
+      leadChanges: R.leadChanges,
+      focus: { name: nm(R, R.fx.F), rival: nm(R, R.fx.rival), won: R.fx.iWin, gap: fmtT(Math.abs(R.fx.margin)), lastSegmentNeed: R.fx.iWin ? null : fmtT(R.fx.need) } } };
+  }
+
+  function init() {
+    let dt = null;
+    const later = () => { save(); clearTimeout(dt); dt = setTimeout(run, 200); };
+    INPUTS.forEach((k) => { $(k).addEventListener('input', () => { state[k] = $(k).value; later(); }); });
+    $('focus').addEventListener('change', () => { state.focus = $('focus').value; run(); });
+    $('rows').addEventListener('input', (e) => { const t = e.target; if (t.dataset.i == null) return; state.rows[+t.dataset.i][t.dataset.f] = t.value; if (t.dataset.f === 'name') focusOptions(); later(); });
+    $('rows').addEventListener('click', (e) => { const b = e.target.closest('button[data-del]'); if (!b || state.rows.length <= C.MIN_ROWS) return; const gone = String(state.rows[+b.dataset.del].name).trim(); if (gone && gone === state.focus) state.focus = ''; state.rows.splice(+b.dataset.del, 1); rowInputs(); run(); });
+    $('addRow').addEventListener('click', () => {
+      if (state.rows.length >= C.MAX_ROWS) return;
+      let i = state.rows.length + 1; const names = state.rows.map((r) => String(r.name).trim());
+      while (names.indexOf('选手 ' + i) >= 0) i++;
+      state.rows.push({ name: '选手 ' + i, times: (state.rows[state.rows.length - 1] || {}).times || '' }); rowInputs(); run();
+    });
+    $('evMore').addEventListener('click', () => { evOpen = !evOpen; if (last) run(); });
+    $('scrub').addEventListener('input', () => { scrubM = +$('scrub').value; if (last) renderCanvas(last.r); });
+    PRESETS.forEach((p) => {
+      const b = document.createElement('button'); b.className = 'ghost'; b.textContent = p[0];
+      b.addEventListener('click', () => { state = copy(p[1]); scrubM = null; fill(); run(); });
+      $('presets').appendChild(b);
+    });
+    $('reset').addEventListener('click', () => { state = copy(DEFAULT); scrubM = null; fill(); run(); });
+    $('dlCSV').addEventListener('click', () => { if (last) download(NAME + '.csv', new Blob([C.toCSV(last.r, stamp())], { type: 'text/csv;charset=utf-8' })); });
+    $('dlMD').addEventListener('click', () => { if (last) download(NAME + '.md', new Blob([C.toMD(last.r, stamp(), last.sg)], { type: 'text/markdown;charset=utf-8' })); });
+    $('dlJSON').addEventListener('click', () => { if (last) download(NAME + '-备份.json', new Blob([JSON.stringify(backup(), null, 2)], { type: 'application/json' })); });
+    $('dlPNG').addEventListener('click', () => { if (last) drawPNG(last).then((cv2) => cv2.toBlob((b) => download(NAME + '-1080x1350.png', b), 'image/png')); });
+    let rt = null; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (last) renderCanvas(last.r); }, 150); });
+    state = load() || copy(DEFAULT);
+    fill(); run();
+    window.__ex = { last: () => last, state: () => state, presets: PRESETS, DEFAULT, drawPNG, backup, bigPlain: () => plain(bigText(last.r)) };
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+
+  </script>
+</body>
+</html>
